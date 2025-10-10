@@ -1,0 +1,27 @@
+networks:
+  dtltm-network:
+    driver: bridge
+
+services:
+  db:
+    image: postgres:latest
+    container_name: dtltm-postgres-db
+    ports:
+      - "5001:5432"
+    env_file:
+      - ./dev-db-conf.env
+    networks:
+      - dtltm-network
+    volumes:
+      - ../../.volume/db:/var/lib/postgresql/data
+  
+  kafka:
+    image: bitnami/kafka:latest
+    container_name: dtltm-kafka
+    ports:
+      - "9092:9092"
+      - "9094:9094"
+    env_file:
+      - ./dev-kafka-conf.env
+    networks:
+      - dtltm-network
