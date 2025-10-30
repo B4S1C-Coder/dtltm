@@ -17,6 +17,7 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -36,18 +37,16 @@ public class Faculty {
   @NotBlank
   private String name;
 
-  @NotBlank
+  @NotNull
   private Date dateOfJoin;
 
   // Lower the score, more senior the faculty
-  @NotBlank
   @Builder.Default
   @Min(value = 1, message = "Minimum Seniority Score is 1.")
   @Max(value = 5, message = "Maximum Seniority Score is 5.")
   private Integer seniorityScore = 1;
 
   // Lower the score, lower the mobility
-  @NotBlank
   @Builder.Default
   @Min(value = 1, message = "Minimum Mobility Score is 1.")
   @Max(value = 3, message = "Maximum Mobility Score is 3.")

@@ -27,7 +27,7 @@ public class SpringSecurityConfig {
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http.authorizeHttpRequests(authorize -> authorize
-          .requestMatchers("/auth/**", "/health/**").permitAll()
+          .requestMatchers("/auth/**", "/health/**", "/faculty/create").permitAll()
           .anyRequest().authenticated())
       .csrf(AbstractHttpConfigurer::disable)
       .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

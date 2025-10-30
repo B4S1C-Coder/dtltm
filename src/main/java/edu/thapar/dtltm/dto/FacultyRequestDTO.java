@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -15,7 +16,7 @@ public class FacultyRequestDTO {
   @Size(min = 3, max = 100, message = "Name length must belong to [3, 100].")
   private String name;
 
-  @NotBlank(message = "Date of joining is required")
+  @NotNull(message = "Date of joining is required")
   private Date dateOfJoin;
 
   @Min(value = 1, message = "Minimum Seniority Score is 1.")

@@ -1,6 +1,7 @@
 package edu.thapar.dtltm.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import edu.thapar.dtltm.dto.FacultyRequestDTO;
 import edu.thapar.dtltm.dto.UserRequestDTO;
@@ -15,6 +16,7 @@ public class FacultyService {
   private final FacultyRepository facultyRepository;
   private final UserService userService;
 
+  @Transactional
   public Faculty createFaculty(FacultyRequestDTO facultyDTO) {
     // Build associated user class
     UserRequestDTO userRequestDTO = new UserRequestDTO(
