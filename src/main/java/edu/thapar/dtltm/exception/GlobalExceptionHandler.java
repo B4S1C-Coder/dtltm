@@ -26,6 +26,47 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
   }
 
+  @ExceptionHandler(BadRequestException.class)
+  public ResponseEntity<ApiErrorDTO> handleBadRequest(
+    BadRequestException ex, HttpServletRequest request
+  ) {
+
+    ApiErrorDTO error = new ApiErrorDTO(
+      HttpStatus.BAD_REQUEST.value(),
+      HttpStatus.BAD_REQUEST.getReasonPhrase(),
+      ex.getMessage(),
+      request.getRequestURI()
+    );
+
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+  }
+
+  @ExceptionHandler(ConflictException.class)
+  public ResponseEntity<ApiErrorDTO> handleConflict(
+    ConflictException ex, HttpServletRequest request
+  ) {
+    ApiErrorDTO error = new ApiErrorDTO(
+      HttpStatus.CONFLICT.value(),
+      HttpStatus.CONFLICT.getReasonPhrase(),
+      ex.getMessage(),
+      request.getRequestURI()
+    );
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+  }
+
+  @ExceptionHandler(ForbiddenException.class)
+  public ResponseEntity<ApiErrorDTO> handleForbidden(
+    ForbiddenException ex, HttpServletRequest request
+  ) {
+    ApiErrorDTO error = new ApiErrorDTO(
+      HttpStatus.FORBIDDEN.value(),
+      HttpStatus.FORBIDDEN.getReasonPhrase(),
+      ex.getMessage(),
+      request.getRequestURI()
+    );
+    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+  }
+
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ApiErrorDTO> handleGenericException(
     Exception ex, HttpServletRequest request
