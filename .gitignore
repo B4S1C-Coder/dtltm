@@ -22,6 +22,9 @@ target/
 *.iml
 *.ipr
 
+.logs/**/*.log
+__pycache__/
+
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/

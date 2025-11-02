@@ -1,0 +1,7 @@
+{
+  "backend": {
+    "port": 20001,
+    "domain": "localhost",
+    "useHttps": false
+  }
+}
