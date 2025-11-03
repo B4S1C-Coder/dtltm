@@ -12,6 +12,7 @@ from pprint import pprint
 from enum import Enum
 from pathlib import Path
 import argparse
+import random
 
 # Configs for manage.py
 BASE_DIR = Path(__file__).resolve().parent
@@ -187,8 +188,9 @@ class HttpTest:
                 try:
                     method()
                     passed += 1
+                    fprint.tpass(f"{test} Succeeded")
                 except AssertionError as aerr:
-                    fprint.fail(f"{test} - {aerr}", self.__log)
+                    fprint.tfail(f"{test} - {aerr}", self.__log)
                     failed += 1
                 except Exception as err:
                     fprint.critical(f"UNHANDLED EXCEPTION - {test} - {err}", self.__log)
@@ -202,9 +204,9 @@ class HttpTest:
         return (passed, skipped, failed)
 
 class LoginAndUserInfoTests(HttpTest):
-    self.token: str|None = None
-    self.creds = {
-        'email': 'test@email.com',
+    token: str|None = None
+    creds = {
+        'email': f'test{random.randint(0, 99999)}@email.com',
         'password': '123'
     }
 
@@ -216,27 +218,43 @@ class LoginAndUserInfoTests(HttpTest):
         response_str, code = self.http_request(
             HttpTestType.POST, 'auth/register', json=self.creds
         )
-
         assert type(response_str) == str, f"Expected response type 'str', got: '{type(response_str)}'"
         assert code >= 200 and code < 300, f"Response code violates 2XX range: {code}"
 
     def obtain_token(self):
-        response, code = self.http_request(HttpTestType.POST, 'auth/login', json=self.creds)
+        response, code = self.http_request(HttpTestType.GET, 'auth/login', json=self.creds)
         assert type(response) == dict, f"Expected response type 'dict', got; '{type(response)}'"
-        
+        assert code >= 200 and code < 300, f"Response code violates 2XX range: {code}"
+
         temp_token = response.get('token', '')
         assert temp_token != '', "Token is absent in response body"
 
         self.token = temp_token
 
     def user_info(self):
+        response, code = self.http_request(HttpTestType.POST, 'auth/login', json=self.creds)
+        assert type(response) == dict, f"Expected response type 'dict', got; '{type(response)}'"
+        
+        temp_token = response.get('token', '')
+        assert temp_token != '', "Token is absent in response body"
+
         response, code = self.http_request(
-            HttpTestType.POST, 'users/current-user-info', headers={
+            HttpTestType.GET, 'users/current-user-info', headers={
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.token}"
+                "Authorization": f"Bearer {temp_token}"
             }
         )
 
+        fprint.info(f"user_info - {temp_token}")
+
+        in_use = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {temp_token}"
+        }
+
+        pprint(in_use)
+
+        fprint.info(f"user_info - {response}")
         assert type(response) == dict, f"Expected response type 'dict', got: '{type(response)}'"
         assert code >= 200 and code < 300, f"Response code violates 2XX range: {code}"
 
