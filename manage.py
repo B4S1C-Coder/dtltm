@@ -117,7 +117,9 @@ class HttpTest:
         return self.__servicename
 
     def http_request(
-        self, test_type: HttpTestType, endpoint: str, headers: dict={}, **kwargs
+        self, test_type: HttpTestType, endpoint: str, headers: dict={
+            "Content-Type": "application/json"
+        }, **kwargs
     ) -> tuple[list[dict], int] | tuple[dict, int] | tuple[str, int]:
 
         url = f"{self.__conf['domain']}:{self.__conf['port']}/{endpoint}"
@@ -200,9 +202,43 @@ class HttpTest:
         return (passed, skipped, failed)
 
 class LoginAndUserInfoTests(HttpTest):
+    self.token: str|None = None
+    self.creds = {
+        'email': 'test@email.com',
+        'password': '123'
+    }
+
     def health_check(self):
         response_str, code = self.http_request(HttpTestType.GET, 'health')
         assert code == 200, f"Unexpected status code: {code}"
+
+    def create_user(self):
+        response_str, code = self.http_request(
+            HttpTestType.POST, 'auth/register', json=self.creds
+        )
+
+        assert type(response_str) == str, f"Expected response type 'str', got: '{type(response_str)}'"
+        assert code >= 200 and code < 300, f"Response code violates 2XX range: {code}"
+
+    def obtain_token(self):
+        response, code = self.http_request(HttpTestType.POST, 'auth/login', json=self.creds)
+        assert type(response) == dict, f"Expected response type 'dict', got; '{type(response)}'"
+        
+        temp_token = response.get('token', '')
+        assert temp_token != '', "Token is absent in response body"
+
+        self.token = temp_token
+
+    def user_info(self):
+        response, code = self.http_request(
+            HttpTestType.POST, 'users/current-user-info', headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.token}"
+            }
+        )
+
+        assert type(response) == dict, f"Expected response type 'dict', got: '{type(response)}'"
+        assert code >= 200 and code < 300, f"Response code violates 2XX range: {code}"
 
 def main():
     parser = argparse.ArgumentParser()
