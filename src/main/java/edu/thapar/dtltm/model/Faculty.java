@@ -56,6 +56,8 @@ public class Faculty {
   @JoinColumn(name = "user_id", nullable = false, unique = true)
   private User user;
 
+  // CHECK: Can be rmeoved in favour of running query against course table and using join
+  // While having this introduces redundancy, but reduces the need of above described join
   @ManyToMany(mappedBy = "taughtBy", fetch = FetchType.LAZY)
   private List<Course> courses;
 

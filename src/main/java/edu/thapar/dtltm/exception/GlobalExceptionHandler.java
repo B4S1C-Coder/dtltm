@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import edu.thapar.dtltm.dto.ApiErrorDTO;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -65,6 +67,26 @@ public class GlobalExceptionHandler {
       request.getRequestURI()
     );
     return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+  }
+
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity<ApiErrorDTO> handleValidationExceptions(
+      MethodArgumentNotValidException ex, HttpServletRequest request
+  ) {
+    String errorMessage = ex.getBindingResult()
+        .getFieldErrors()
+        .stream()
+        .map(error -> error.getField() + ": " + error.getDefaultMessage())
+        .collect(Collectors.joining(", "));
+
+    ApiErrorDTO error = new ApiErrorDTO(
+      HttpStatus.BAD_REQUEST.value(),
+      HttpStatus.BAD_REQUEST.getReasonPhrase(),
+      errorMessage,
+      request.getRequestURI()
+    );
+
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
   }
 
   @ExceptionHandler(Exception.class)
