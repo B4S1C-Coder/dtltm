@@ -52,6 +52,17 @@ public class Faculty {
   @Max(value = 3, message = "Maximum Mobility Score is 3.")
   private Integer mobilityScore = 1;
 
+  // Rating between 1.0 and 5.0, higher is better
+  @Builder.Default
+  @Min(value = 1, message = "Minimum Rating is 1.0.")
+  @Max(value = 5, message = "Maximum Rating is 5.0.")
+  private Double rating = 1.0;
+
+  // Maximum hours per week the faculty can teach
+  @Builder.Default
+  @Min(value = 1, message = "Max hours per week must be at least 1.")
+  private Integer maxHoursPerWeek = 20;
+
   @OneToOne(optional = false, fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
   @JoinColumn(name = "user_id", nullable = false, unique = true)
   private User user;

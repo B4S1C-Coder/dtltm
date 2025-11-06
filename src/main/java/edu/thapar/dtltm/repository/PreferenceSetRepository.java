@@ -13,6 +13,7 @@ public interface PreferenceSetRepository extends JpaRepository<PreferenceSet, UU
   Optional<PreferenceSet> findByFaculty_IdAndTerm_Id(UUID facultyId, UUID termId);
   List<PreferenceSet> findByFaculty_Id(UUID facultyId);
   List<PreferenceSet> findByFaculty_IdAndStatus(UUID facultyId, Status status);
+  List<PreferenceSet> findByTerm_Id(UUID termId);
 }
 
 
