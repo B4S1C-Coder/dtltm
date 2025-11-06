@@ -13,6 +13,7 @@ from enum import Enum
 from pathlib import Path
 import argparse
 import random
+import uuid
 
 # Configs for manage.py
 BASE_DIR = Path(__file__).resolve().parent
@@ -44,6 +45,12 @@ file_handler.setFormatter(logging.Formatter(
 
 if not TestLogger.handlers:
     TestLogger.addHandler(file_handler)
+
+def get_random_creds() -> dict:
+    return {
+        'email': f'{str(uuid.uuid4()).replace("-","")}',
+        'password': '123'
+    }
 
 class fprint:
     @staticmethod
@@ -271,13 +278,14 @@ class CourseAssignmentTests(HttpTest):
     def create_admin_user(self):
         """Create an admin user for testing"""
         # First create a regular user
+        creds = get_random_creds()
         response_str, code = self.http_request(
-            HttpTestType.POST, 'auth/register', json=self.admin_creds
+            HttpTestType.POST, 'auth/register', json=creds
         )
         assert code >= 200 and code < 300, f"Failed to create admin user: {code}"
         
         # Login to get token
-        response, code = self.http_request(HttpTestType.POST, 'auth/login', json=self.admin_creds)
+        response, code = self.http_request(HttpTestType.POST, 'auth/login', json=creds)
         assert code >= 200 and code < 300, f"Failed to login: {code}"
         assert type(response) == dict, f"Expected response type 'dict', got: '{type(response)}'"
         
