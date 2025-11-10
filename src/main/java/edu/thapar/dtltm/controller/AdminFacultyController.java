@@ -13,8 +13,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import edu.thapar.dtltm.dto.FacultyResponseDTO;
 import edu.thapar.dtltm.dto.FacultyUpdateDTO;
 import edu.thapar.dtltm.exception.ForbiddenException;
+import edu.thapar.dtltm.mapper.FacultyMapper;
 import edu.thapar.dtltm.model.Faculty;
 import edu.thapar.dtltm.model.User;
 import edu.thapar.dtltm.service.FacultyService;
@@ -35,29 +37,32 @@ public class AdminFacultyController {
   }
 
   @GetMapping
-  public ResponseEntity<List<Faculty>> getAllFaculties(@AuthenticationPrincipal User user) {
+  public ResponseEntity<List<FacultyResponseDTO>> getAllFaculties(@AuthenticationPrincipal User user) {
     checkAdmin(user);
-    List<Faculty> faculties = facultyService.getAllFaculties();
+    List<FacultyResponseDTO> faculties = facultyService
+        .getAllFaculties().stream().map(
+          f -> FacultyMapper.toDTO(f)
+        ).toList();
     return ResponseEntity.ok(faculties);
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<Faculty> getFacultyById(
+  public ResponseEntity<FacultyResponseDTO> getFacultyById(
       @AuthenticationPrincipal User user,
       @PathVariable UUID id) {
     checkAdmin(user);
     Faculty faculty = facultyService.getFacultyById(id);
-    return ResponseEntity.ok(faculty);
+    return ResponseEntity.ok(FacultyMapper.toDTO(faculty));
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<Faculty> updateFaculty(
+  public ResponseEntity<FacultyResponseDTO> updateFaculty(
       @AuthenticationPrincipal User user,
       @PathVariable UUID id,
       @Valid @RequestBody FacultyUpdateDTO dto) {
     checkAdmin(user);
     Faculty faculty = facultyService.updateFaculty(id, dto);
-    return ResponseEntity.ok(faculty);
+    return ResponseEntity.ok(FacultyMapper.toDTO(faculty));
   }
 
   @DeleteMapping("/{id}")
