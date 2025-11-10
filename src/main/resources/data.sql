@@ -147,7 +147,8 @@ INSERT INTO users (id, email, password, role, is_email_verified) VALUES
 (gen_random_uuid(),'dipjyoti.das@thapar.edu','password','USER',false),
 (gen_random_uuid(),'manpreet.kaur2@thapar.edu','password','USER',false),
 (gen_random_uuid(),'manvir.kaur@thapar.edu','password','USER',false),
-(gen_random_uuid(),'janardan.kundu@thapar.edu','password','USER',false);
+(gen_random_uuid(),'janardan.kundu@thapar.edu','password','USER',false),
+(gen_random_uuid(),'admin@dltm.thapar.edu','$2a$10$GXLtYt1u5OrnAcp99Ba74uG4JoG8r5iSPXMZ5fJzq1wEFtATBKS0a','ADMIN',false);
 
 -- ======================
 -- Seed FACULTIES

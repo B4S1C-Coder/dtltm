@@ -212,16 +212,24 @@ class HttpTest:
 
 class LoginAndUserInfoTests(HttpTest):
     token: str|None = None
-    creds = {
-        'email': f'test{random.randint(0, 99999)}@email.com',
-        'password': '123'
-    }
+    # creds = {
+    #     'email': f'test{random.randint(0, 99999)}@email.com',
+    #     'password': '123'
+    # }
+
+    def __init__(self, servicename: str, tlogger: logging.Logger | None = None, print_cfg: bool = True):
+        super().__init__(servicename, tlogger, print_cfg)
+        self.creds = {
+            'email': f'test{random.randint(0, 99999)}@email.com',
+            'password': '123'
+        }
+        self.__create_user()
 
     def health_check(self):
         response_str, code = self.http_request(HttpTestType.GET, 'health')
         assert code == 200, f"Unexpected status code: {code}"
 
-    def create_user(self):
+    def __create_user(self):
         response_str, code = self.http_request(
             HttpTestType.POST, 'auth/register', json=self.creds
         )
@@ -268,8 +276,8 @@ class LoginAndUserInfoTests(HttpTest):
 class CourseAssignmentTests(HttpTest):
     admin_token: str|None = None
     admin_creds = {
-        'email': f'admin{random.randint(0, 99999)}@email.com',
-        'password': 'admin123'
+        'email': f'admin@dltm.thapar.edu',
+        'password': 'admin'
     }
     faculty_id: str|None = None
     course_id: str|None = None
@@ -277,15 +285,9 @@ class CourseAssignmentTests(HttpTest):
 
     def create_admin_user(self):
         """Create an admin user for testing"""
-        # First create a regular user
-        creds = get_random_creds()
-        response_str, code = self.http_request(
-            HttpTestType.POST, 'auth/register', json=creds
-        )
-        assert code >= 200 and code < 300, f"Failed to create admin user: {code}"
-        
         # Login to get token
-        response, code = self.http_request(HttpTestType.POST, 'auth/login', json=creds)
+        response, code = self.http_request(HttpTestType.POST, 'auth/login', json=self.admin_creds)
+        print(response)
         assert code >= 200 and code < 300, f"Failed to login: {code}"
         assert type(response) == dict, f"Expected response type 'dict', got: '{type(response)}'"
         
@@ -315,6 +317,8 @@ class CourseAssignmentTests(HttpTest):
             'name': 'Test Course',
             'taughtBy': []
         }
+
+        assert self.admin_token != None, "Admin Token is none. Test aborted."
         
         headers = {
             "Content-Type": "application/json",
@@ -343,7 +347,7 @@ class CourseAssignmentTests(HttpTest):
             'name': 'Test Course for CRUD',
             'hoursRequiredPerWeek': 3
         }
-        
+        assert self.admin_token != None, "Admin Token is none. Test aborted."
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.admin_token}"
@@ -400,6 +404,8 @@ class CourseAssignmentTests(HttpTest):
     def test_admin_crud_faculties(self):
         """Test admin CRUD operations on faculties"""
         self.create_admin_user()
+
+        assert self.admin_token != None, "Admin Token is none. Test aborted."
         
         headers = {
             "Content-Type": "application/json",
@@ -443,6 +449,8 @@ class CourseAssignmentTests(HttpTest):
         # 4. Running assignment
         # For now, just verify the endpoint exists
         self.create_admin_user()
+
+        assert self.admin_token != None, "Admin Token is none. Test aborted."
         
         headers = {
             "Content-Type": "application/json",
@@ -458,6 +466,7 @@ class CourseAssignmentTests(HttpTest):
         response, code = self.http_request(
             HttpTestType.POST, 'admin/assignments/run', headers=headers, json=assignment_request
         )
+        print(response)
         # Should return 400 (Bad Request) for invalid term, not 500
         assert code >= 400 and code < 500, f"Expected 4xx error for invalid term, got: {code}"
 
