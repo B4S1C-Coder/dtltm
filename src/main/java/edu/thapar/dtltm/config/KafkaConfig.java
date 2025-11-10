@@ -38,4 +38,9 @@ public class KafkaConfig {
   public NewTopic userRegistration() {
     return TopicBuilder.name("user-registration").partitions(1).replicas(1).build();
   }
+
+  @Bean
+  public NewTopic courseAssignmentLLM() {
+    return TopicBuilder.name("course-assignment-llm").partitions(1).replicas(1).build();
+  }
 }

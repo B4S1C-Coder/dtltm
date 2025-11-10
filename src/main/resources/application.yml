@@ -1,4 +1,7 @@
 spring:
+  sql:
+    init:
+      mode: always
   application:
     name: dtltm
   datasource:
@@ -6,6 +9,7 @@ spring:
     username: ${DB_USERNAME:admin_user}
     password: ${DB_PASSWORD:password}
   jpa:
+    defer-datasource-initialization: true
     hibernate:
       ddl-auto: update
     show-sql: true

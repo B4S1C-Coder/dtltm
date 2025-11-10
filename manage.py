@@ -13,6 +13,7 @@ from enum import Enum
 from pathlib import Path
 import argparse
 import random
+import uuid
 
 # Configs for manage.py
 BASE_DIR = Path(__file__).resolve().parent
@@ -44,6 +45,12 @@ file_handler.setFormatter(logging.Formatter(
 
 if not TestLogger.handlers:
     TestLogger.addHandler(file_handler)
+
+def get_random_creds() -> dict:
+    return {
+        'email': f'{str(uuid.uuid4()).replace("-","")}',
+        'password': '123'
+    }
 
 class fprint:
     @staticmethod
@@ -205,16 +212,24 @@ class HttpTest:
 
 class LoginAndUserInfoTests(HttpTest):
     token: str|None = None
-    creds = {
-        'email': f'test{random.randint(0, 99999)}@email.com',
-        'password': '123'
-    }
+    # creds = {
+    #     'email': f'test{random.randint(0, 99999)}@email.com',
+    #     'password': '123'
+    # }
+
+    def __init__(self, servicename: str, tlogger: logging.Logger | None = None, print_cfg: bool = True):
+        super().__init__(servicename, tlogger, print_cfg)
+        self.creds = {
+            'email': f'test{random.randint(0, 99999)}@email.com',
+            'password': '123'
+        }
+        self.__create_user()
 
     def health_check(self):
         response_str, code = self.http_request(HttpTestType.GET, 'health')
         assert code == 200, f"Unexpected status code: {code}"
 
-    def create_user(self):
+    def __create_user(self):
         response_str, code = self.http_request(
             HttpTestType.POST, 'auth/register', json=self.creds
         )
@@ -222,7 +237,7 @@ class LoginAndUserInfoTests(HttpTest):
         assert code >= 200 and code < 300, f"Response code violates 2XX range: {code}"
 
     def obtain_token(self):
-        response, code = self.http_request(HttpTestType.GET, 'auth/login', json=self.creds)
+        response, code = self.http_request(HttpTestType.POST, 'auth/login', json=self.creds)
         assert type(response) == dict, f"Expected response type 'dict', got; '{type(response)}'"
         assert code >= 200 and code < 300, f"Response code violates 2XX range: {code}"
 
@@ -258,9 +273,207 @@ class LoginAndUserInfoTests(HttpTest):
         assert type(response) == dict, f"Expected response type 'dict', got: '{type(response)}'"
         assert code >= 200 and code < 300, f"Response code violates 2XX range: {code}"
 
+class CourseAssignmentTests(HttpTest):
+    admin_token: str|None = None
+    admin_creds = {
+        'email': f'admin@dltm.thapar.edu',
+        'password': 'admin'
+    }
+    faculty_id: str|None = None
+    course_id: str|None = None
+    term_id: str|None = None
+
+    def create_admin_user(self):
+        """Create an admin user for testing"""
+        # Login to get token
+        response, code = self.http_request(HttpTestType.POST, 'auth/login', json=self.admin_creds)
+        print(response)
+        assert code >= 200 and code < 300, f"Failed to login: {code}"
+        assert type(response) == dict, f"Expected response type 'dict', got: '{type(response)}'"
+        
+        self.admin_token = response.get('token', '')
+        assert self.admin_token != '', "Token is absent in response body"
+
+    def create_faculty(self):
+        """Create a faculty member for testing"""
+        faculty_data = {
+            'name': 'Test Faculty',
+            'email': f'faculty{random.randint(0, 99999)}@email.com',
+            'password': 'faculty123',
+            'dateOfJoin': '2020-01-01',
+            'seniorityScore': 2,
+            'mobilityScore': 1
+        }
+        
+        response, code = self.http_request(
+            HttpTestType.POST, 'faculty/create', json=faculty_data
+        )
+        assert code >= 200 and code < 300, f"Failed to create faculty: {code}"
+
+    def create_course(self):
+        """Create a course for testing"""
+        course_data = {
+            'code': f'CS{random.randint(100, 999)}',
+            'name': 'Test Course',
+            'taughtBy': []
+        }
+
+        assert self.admin_token != None, "Admin Token is none. Test aborted."
+        
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.admin_token}"
+        }
+        
+        response, code = self.http_request(
+            HttpTestType.POST, 'courses/create', headers=headers, json=course_data
+        )
+        assert code == 201, f"Failed to create course: {code}"
+        
+        # Get course ID from response or list
+        courses_response, code = self.http_request(
+            HttpTestType.GET, 'admin/courses', headers=headers
+        )
+        if code == 200 and type(courses_response) == list and len(courses_response) > 0:
+            self.course_id = courses_response[-1].get('id')
+
+    def test_admin_crud_courses(self):
+        """Test admin CRUD operations on courses"""
+        self.create_admin_user()
+        
+        # Create course
+        course_data = {
+            'code': f'TEST{random.randint(1000, 9999)}',
+            'name': 'Test Course for CRUD',
+            'hoursRequiredPerWeek': 3
+        }
+        assert self.admin_token != None, "Admin Token is none. Test aborted."
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.admin_token}"
+        }
+        
+        # Create
+        response, code = self.http_request(
+            HttpTestType.POST, 'courses/create', headers=headers, json=course_data
+        )
+        assert code == 201, f"Failed to create course: {code}"
+        
+        # Get all courses
+        courses, code = self.http_request(
+            HttpTestType.GET, 'admin/courses', headers=headers
+        )
+        assert code == 200, f"Failed to get courses: {code}"
+        assert type(courses) == list, f"Expected list, got: {type(courses)}"
+        
+        # Find the course we just created
+        created_course = None
+        for course in courses:
+            if course.get('code') == course_data['code']:
+                created_course = course
+                break
+        
+        assert created_course is not None, "Created course not found in list"
+        course_id = created_course.get('id')
+        assert course_id is not None, "Course ID is missing"
+        
+        # Get course by ID
+        course, code = self.http_request(
+            HttpTestType.GET, f'admin/courses/{course_id}', headers=headers
+        )
+        assert code == 200, f"Failed to get course by ID: {code}"
+        assert course.get('code') == course_data['code'], "Course code mismatch"
+        
+        # Update course
+        update_data = {
+            'name': 'Updated Course Name',
+            'hoursRequiredPerWeek': 4
+        }
+        updated_course, code = self.http_request(
+            HttpTestType.PUT, f'admin/courses/{course_id}', headers=headers, json=update_data
+        )
+        assert code == 200, f"Failed to update course: {code}"
+        assert updated_course.get('name') == update_data['name'], "Course name not updated"
+        
+        # Delete course
+        response, code = self.http_request(
+            HttpTestType.DELETE, f'admin/courses/{course_id}', headers=headers
+        )
+        assert code == 200, f"Failed to delete course: {code}"
+
+    def test_admin_crud_faculties(self):
+        """Test admin CRUD operations on faculties"""
+        self.create_admin_user()
+
+        assert self.admin_token != None, "Admin Token is none. Test aborted."
+        
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.admin_token}"
+        }
+        
+        # Get all faculties
+        faculties, code = self.http_request(
+            HttpTestType.GET, 'admin/faculties', headers=headers
+        )
+        assert code == 200, f"Failed to get faculties: {code}"
+        assert type(faculties) == list, f"Expected list, got: {type(faculties)}"
+        
+        if len(faculties) > 0:
+            faculty_id = faculties[0].get('id')
+            assert faculty_id is not None, "Faculty ID is missing"
+            
+            # Get faculty by ID
+            faculty, code = self.http_request(
+                HttpTestType.GET, f'admin/faculties/{faculty_id}', headers=headers
+            )
+            assert code == 200, f"Failed to get faculty by ID: {code}"
+            
+            # Update faculty
+            update_data = {
+                'rating': 4.5,
+                'maxHoursPerWeek': 15
+            }
+            updated_faculty, code = self.http_request(
+                HttpTestType.PUT, f'admin/faculties/{faculty_id}', headers=headers, json=update_data
+            )
+            assert code == 200, f"Failed to update faculty: {code}"
+            assert updated_faculty.get('rating') == update_data['rating'], "Faculty rating not updated"
+
+    def test_automatic_assignment(self):
+        """Test automatic course assignment flow"""
+        # This is a placeholder test - actual implementation would require:
+        # 1. Creating academic term
+        # 2. Creating preference sets
+        # 3. Submitting preferences
+        # 4. Running assignment
+        # For now, just verify the endpoint exists
+        self.create_admin_user()
+
+        assert self.admin_token != None, "Admin Token is none. Test aborted."
+        
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.admin_token}"
+        }
+        
+        # This would need a valid term ID
+        assignment_request = {
+            'termId': '00000000-0000-0000-0000-000000000000'  # Placeholder
+        }
+        
+        # We expect this to fail with a proper error, not crash
+        response, code = self.http_request(
+            HttpTestType.POST, 'admin/assignments/run', headers=headers, json=assignment_request
+        )
+        print(response)
+        # Should return 400 (Bad Request) for invalid term, not 500
+        assert code >= 400 and code < 500, f"Expected 4xx error for invalid term, got: {code}"
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("action", choices=["up", "down", "server", "dev", "test"])
+    parser.add_argument("--test-suite", choices=["login", "assignment"], help="Which test suite to run")
 
     args = parser.parse_args()
 
@@ -277,8 +490,13 @@ def main():
         print("Handing over control to Spring Boot ...")
         os.execvp(str(MVNW), [str(MVNW), "spring-boot:run"])
     elif args.action == "test":
-        login_tests = LoginAndUserInfoTests('backend', TestLogger)
-        login_tests.execute_tests()
+        test_suite = getattr(args, 'test_suite', None)
+        if test_suite == "assignment" or test_suite is None:
+            assignment_tests = CourseAssignmentTests('backend', TestLogger)
+            assignment_tests.execute_tests()
+        if test_suite == "login" or test_suite is None:
+            login_tests = LoginAndUserInfoTests('backend', TestLogger)
+            login_tests.execute_tests()
 
 if __name__ == "__main__":
     main()

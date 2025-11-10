@@ -13,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,6 +37,11 @@ public class Course {
 
   @NotBlank
   private String name;
+
+  // Hours required per week for this course
+  @Builder.Default
+  @Min(value = 1, message = "Hours required per week must be at least 1.")
+  private Integer hoursRequiredPerWeek = 3;
   
   @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(

@@ -12,8 +12,8 @@ services:
       - ./dev-db-conf.env
     networks:
       - dtltm-network
-    volumes:
-      - ../../.volume/db:/var/lib/postgresql/data
+    # volumes:
+    #   - ../../.volume/db:/var/lib/postgresql/data
   
   kafka:
     image: bitnami/kafka:latest
