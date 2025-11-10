@@ -275,15 +275,21 @@ class LoginAndUserInfoTests(HttpTest):
 
 class CourseAssignmentTests(HttpTest):
     admin_token: str|None = None
-    admin_creds = {
-        'email': f'admin@dltm.thapar.edu',
-        'password': 'admin'
-    }
     faculty_id: str|None = None
     course_id: str|None = None
     term_id: str|None = None
 
-    def create_admin_user(self):
+    def __init__(self, servicename: str, tlogger: logging.Logger | None = None, print_cfg: bool = True):
+        super().__init__(servicename, tlogger, print_cfg)
+        
+        self.admin_creds = {
+            'email': f'admin@dltm.thapar.edu',
+            'password': 'admin'
+        }
+        
+        self.__create_admin_user()
+
+    def __create_admin_user(self):
         """Create an admin user for testing"""
         # Login to get token
         response, code = self.http_request(HttpTestType.POST, 'auth/login', json=self.admin_creds)
@@ -339,7 +345,7 @@ class CourseAssignmentTests(HttpTest):
 
     def test_admin_crud_courses(self):
         """Test admin CRUD operations on courses"""
-        self.create_admin_user()
+        # self.create_admin_user()
         
         # Create course
         course_data = {
@@ -403,7 +409,7 @@ class CourseAssignmentTests(HttpTest):
 
     def test_admin_crud_faculties(self):
         """Test admin CRUD operations on faculties"""
-        self.create_admin_user()
+        # self.create_admin_user()
 
         assert self.admin_token != None, "Admin Token is none. Test aborted."
         
@@ -416,9 +422,9 @@ class CourseAssignmentTests(HttpTest):
         faculties, code = self.http_request(
             HttpTestType.GET, 'admin/faculties', headers=headers
         )
-        print("==================")
-        print(faculties)
-        print("==================")
+        # print("==================")
+        # print(faculties)
+        # print("==================")
         assert code == 200, f"Failed to get faculties: {code}"
         assert type(faculties) == list, f"Expected list, got: {type(faculties)}"
         
@@ -438,7 +444,7 @@ class CourseAssignmentTests(HttpTest):
                 'maxHoursPerWeek': 15
             }
             updated_faculty, code = self.http_request(
-                HttpTestType.PUT, f'admin/faculties/{faculty_id}', headers=headers, json=update_data
+                HttpTestType.PUT_OR_PATCH, f'admin/faculties/{faculty_id}', headers=headers, json=update_data
             )
             assert code == 200, f"Failed to update faculty: {code}"
             assert updated_faculty.get('rating') == update_data['rating'], "Faculty rating not updated"
@@ -451,7 +457,7 @@ class CourseAssignmentTests(HttpTest):
         # 3. Submitting preferences
         # 4. Running assignment
         # For now, just verify the endpoint exists
-        self.create_admin_user()
+        # self.create_admin_user()
 
         assert self.admin_token != None, "Admin Token is none. Test aborted."
         
