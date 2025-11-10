@@ -390,7 +390,7 @@ class CourseAssignmentTests(HttpTest):
             'hoursRequiredPerWeek': 4
         }
         updated_course, code = self.http_request(
-            HttpTestType.PUT, f'admin/courses/{course_id}', headers=headers, json=update_data
+            HttpTestType.PUT_OR_PATCH, f'admin/courses/{course_id}', headers=headers, json=update_data
         )
         assert code == 200, f"Failed to update course: {code}"
         assert updated_course.get('name') == update_data['name'], "Course name not updated"
@@ -416,6 +416,9 @@ class CourseAssignmentTests(HttpTest):
         faculties, code = self.http_request(
             HttpTestType.GET, 'admin/faculties', headers=headers
         )
+        print("==================")
+        print(faculties)
+        print("==================")
         assert code == 200, f"Failed to get faculties: {code}"
         assert type(faculties) == list, f"Expected list, got: {type(faculties)}"
         
