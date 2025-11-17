@@ -1,3 +1,4 @@
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/B4S1C-Coder/dtltm)
 # Departmental Load & Timetable Management System
 A centralized dynamic system to manage teaching loads and manage timetables on the fly. More details soon.
 
