@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '', // CRA proxy will forward to backend (http://localhost:5000)
+  baseURL: 'http://localhost:20001', // CRA proxy will forward to backend (http://localhost:5000)
 });
 
 // Attach token
